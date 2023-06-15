@@ -141,20 +141,70 @@ func (ph *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) 
 // Sesuaikan dengan logika akses database Anda
 func (ph *ProductHandler) fetchProducts() ([]models.Product, error) {
 	// Implementasi logika akses database untuk mendapatkan daftar produk
+	query := "SELECT id, name, price FROM products"
+	rows, err := ph.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	products := []models.Product{}
+	for rows.Next() {
+		var product models.Product
+		err := rows.Scan(&product.ID, &product.Name, &product.Price)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		products = append(products, product)
+	}
+
+	return products, nil
 }
 
 func (ph *ProductHandler) fetchProductByID(id int) (models.Product, error) {
 	// Implementasi logika akses database untuk mendapatkan produk berdasarkan ID
+	query := "SELECT id, name, price FROM products WHERE id = ?"
+	row := ph.DB.QueryRow(query, id)
+
+	var product models.Product
+	err := row.Scan(&product.ID, &product.Name, &product.Price)
+	if err != nil {
+		return models.Product{}, err
+	}
+
+	return product, nil
 }
 
 func (ph *ProductHandler) createProduct(product models.Product) error {
 	// Implementasi logika akses database untuk membuat produk baru
+	query := "INSERT INTO products (name, price) VALUES (?, ?)"
+	_, err := ph.DB.Exec(query, product.Name, product.Price)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (ph *ProductHandler) updateProduct(product models.Product) error {
 	// Implementasi logika akses database untuk mengupdate produk
+	query := "UPDATE products SET name = ?, price = ? WHERE id = ?"
+	_, err := ph.DB.Exec(query, product.Name, product.Price, product.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (ph *ProductHandler) deleteProduct(id int) error {
 	// Implementasi logika akses database untuk menghapus produk
+	query := "DELETE FROM products WHERE id = ?"
+	_, err := ph.DB.Exec(query, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
